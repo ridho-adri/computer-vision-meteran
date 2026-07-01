@@ -41,6 +41,9 @@ desktop.ini
 *.log
 logs/
 
+# Dataset cache (YOLO)
+dataset/**/labels.cache
+
 # Temp
 *.tmp
 *.temp
