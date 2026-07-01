@@ -3,7 +3,7 @@ gunicorn==23.0.0
 ultralytics==8.4.71
 torch
 torchvision
-opencv-python-headless
+opencv-python-headless==4.8.1.78
 numpy
 Pillow
 matplotlib
