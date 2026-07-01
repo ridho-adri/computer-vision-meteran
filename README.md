@@ -49,22 +49,24 @@ Sistem pembaca meteran listrik analog secara otomatis menggunakan pendekatan **C
 
 ```
 computer-vision-meteran/
-├── app.py                  # Flask web application
-├── pipeline.py             # CV pipeline (YOLOv8 + LeNet-5)
-├── requirements.txt        # Python dependencies
-├── Dockerfile              # Docker config untuk Railway
-├── Procfile                # Gunicorn entry point
+├── V1_computer_vision.ipynb  # Notebook: training YOLOv8 + LeNet-5 + evaluasi
+├── clean_dataset.py          # Script pembersihan dataset sebelum training
+├── app.py                    # Flask web application
+├── pipeline.py               # CV pipeline (YOLOv8 + LeNet-5)
+├── requirements.txt          # Python dependencies
+├── Dockerfile                # Docker config untuk Railway
+├── Procfile                  # Gunicorn entry point
 ├── models/
-│   ├── yolov8_best.pt      # YOLOv8 trained model (~6MB)
-│   └── lenet5_best.pt      # LeNet-5 trained model (~1.3MB)
+│   ├── yolov8_best.pt        # YOLOv8 trained model (~6MB)
+│   └── lenet5_best.pt        # LeNet-5 trained model (~1.3MB)
 ├── dataset/
-│   ├── data.yaml           # Dataset config
-│   ├── train/              # Training data (images + labels)
-│   └── valid/              # Validation data (images + labels)
+│   ├── data.yaml             # Dataset config
+│   ├── train/                # Training data (images + labels)
+│   └── valid/                # Validation data (images + labels)
 ├── templates/
-│   └── index.html          # Frontend UI
+│   └── index.html            # Frontend UI
 └── static/
-    └── css/style.css       # Styling
+    └── css/style.css         # Styling
 ```
 
 ---
