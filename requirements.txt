@@ -1,0 +1,9 @@
+Flask==3.1.0
+gunicorn==23.0.0
+ultralytics==8.4.71
+torch
+torchvision
+opencv-python-headless
+numpy
+Pillow
+matplotlib

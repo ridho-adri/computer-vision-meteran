@@ -1,0 +1,46 @@
+# ============================================================
+# .gitignore — computer-vision-meteran
+# ============================================================
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+.eggs/
+.env
+.venv
+env/
+venv/
+ENV/
+
+# Flask uploads (jangan di-push)
+static/uploads/*
+!static/uploads/.gitkeep
+
+# PyTorch cache
+*.pt.bak
+*.pth.bak
+
+# Jupyter
+.ipynb_checkpoints/
+
+# VS Code
+.vscode/
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Logs
+*.log
+logs/
+
+# Temp
+*.tmp
+*.temp

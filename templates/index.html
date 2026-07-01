@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Pembaca Meteran Listrik — CV App</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/css/style.css" />
+</head>
+<body>
+
+  <div class="container">
+
+    <header class="header">
+      <h1>⚡ Pembaca Meteran Listrik</h1>
+      <p>Upload foto meteran analog → sistem akan membaca angkanya otomatis</p>
+    </header>
+
+    <div class="card upload-card">
+      <div class="upload-area" id="uploadArea">
+        <div class="upload-icon">📷</div>
+        <p class="upload-text">Drag & drop foto meteran di sini</p>
+        <p class="upload-subtext">atau</p>
+        <label class="btn-upload" for="fileInput">Pilih Foto</label>
+        <input type="file" id="fileInput" accept=".jpg,.jpeg,.png,.bmp" hidden />
+        <p class="upload-info">Format: JPG, PNG, BMP • Maks: 16MB</p>
+      </div>
+    </div>
+
+    <div class="card preview-card" id="previewCard" style="display:none;">
+      <h2>📸 Foto yang Diupload</h2>
+      <img id="previewImg" src="" alt="Preview" />
+    </div>
+
+    <div class="btn-container" id="btnContainer" style="display:none;">
+      <button class="btn-process" id="btnProcess" onclick="processImage()">
+        🔍 Baca Angka Meteran
+      </button>
+      <button class="btn-reset" onclick="resetApp()">
+        🔄 Reset
+      </button>
+    </div>
+
+    <div class="loading" id="loading" style="display:none;">
+      <div class="spinner"></div>
+      <p>Sedang memproses gambar...</p>
+    </div>
+
+    <div class="card result-card" id="resultCard" style="display:none;">
+
+      <div class="meter-result" id="meterResult">
+        <p class="meter-label">Angka Meteran Terbaca</p>
+        <div class="meter-digits" id="meterDigits">—</div>
+        <p class="meter-kwh" id="meterKwh"></p>
+      </div>
+
+      <div class="result-images">
+        <div class="result-img-box">
+          <h3>Hasil Deteksi</h3>
+          <img id="resultImg" src="" alt="Hasil Deteksi" />
+        </div>
+      </div>
+
+      <div class="digit-detail">
+        <h3>📊 Detail Per Digit</h3>
+        <table id="digitTable">
+          <thead>
+            <tr>
+              <th>Posisi</th>
+              <th>Digit</th>
+              <th>YOLO Conf</th>
+              <th>LeNet Conf</th>
+            </tr>
+          </thead>
+          <tbody id="digitTableBody"></tbody>
+        </table>
+      </div>
+
+      <div style="text-align: center;">
+          <p class="status-msg" id="statusMsg"></p>
+      </div>
+    </div>
+
+    <div class="card error-card" id="errorCard" style="display:none;">
+      <p class="error-icon">❌</p>
+      <p class="error-msg" id="errorMsg"></p>
+    </div>
+
+  </div>
+
+  <script>
+    // ============================================================
+    // app V1.0 Rev 0 | Frontend Logic
+    // ============================================================
+
+    let selectedFile = null;
+
+    // --- Drag & Drop ---
+    const uploadArea = document.getElementById("uploadArea");
+
+    uploadArea.addEventListener("dragover", (e) => {
+      e.preventDefault();
+      uploadArea.classList.add("dragover");
+    });
+
+    uploadArea.addEventListener("dragleave", () => {
+      uploadArea.classList.remove("dragover");
+    });
+
+    uploadArea.addEventListener("drop", (e) => {
+      e.preventDefault();
+      uploadArea.classList.remove("dragover");
+      const file = e.dataTransfer.files[0];
+      if (file) handleFileSelect(file);
+    });
+
+    // --- File Input ---
+    document.getElementById("fileInput").addEventListener("change", (e) => {
+      const file = e.target.files[0];
+      if (file) handleFileSelect(file);
+    });
+
+    // --- Handle File Select ---
+    function handleFileSelect(file) {
+      const allowed = ["image/jpeg", "image/png", "image/bmp"];
+
+      if (!allowed.includes(file.type)) {
+        alert("Format tidak didukung! Gunakan JPG, PNG, atau BMP.");
+        return;
+      }
+      if (file.size > 16 * 1024 * 1024) {
+        alert("Ukuran file terlalu besar! Maksimal 16MB.");
+        return;
+      }
+
+      selectedFile = file;
+
+      // Tampilkan preview
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        document.getElementById("previewImg").src = e.target.result;
+        document.getElementById("previewCard").style.display = "block";
+        document.getElementById("btnContainer").style.display = "flex";
+        document.getElementById("resultCard").style.display = "none";
+        document.getElementById("errorCard").style.display = "none";
+      };
+      reader.readAsDataURL(file);
+    }
+
+    // --- Proses Gambar ---
+    async function processImage() {
+      if (!selectedFile) return;
+
+      // Tampilkan loading
+      document.getElementById("loading").style.display = "flex";
+      document.getElementById("btnProcess").disabled = true;
+      document.getElementById("resultCard").style.display = "none";
+      document.getElementById("errorCard").style.display = "none";
+
+      try {
+        const formData = new FormData();
+        formData.append("file", selectedFile);
+
+        const response = await fetch("/predict", {
+          method: "POST",
+          body: formData,
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          showResult(data);
+        } else {
+          showError(data.message);
+        }
+      } catch (err) {
+        showError("Terjadi kesalahan koneksi. Coba lagi.");
+      } finally {
+        document.getElementById("loading").style.display = "none";
+        document.getElementById("btnProcess").disabled = false;
+      }
+    }
+
+    // --- Tampilkan Hasil ---
+    function showResult(data) {
+      // Angka meteran utama
+      document.getElementById("meterDigits").textContent = data.meter_reading;
+      document.getElementById("meterKwh").textContent    = `${data.meter_reading} kWh`;
+      document.getElementById("statusMsg").textContent   = `✅ ${data.message}`;
+
+      // Gambar hasil
+      if (data.result_img) {
+        document.getElementById("resultImg").src = data.result_img + "?t=" + Date.now();
+      }
+
+      // Tabel detail digit
+      const tbody = document.getElementById("digitTableBody");
+      tbody.innerHTML = "";
+      data.digits.forEach((d, idx) => {
+        const row = `
+          <tr>
+            <td>${idx + 1}</td>
+            <td><strong>${d.digit}</strong></td>
+            <td>${(d.yolo_conf * 100).toFixed(1)}%</td>
+            <td>${(d.lenet_conf * 100).toFixed(1)}%</td>
+          </tr>
+        `;
+        tbody.innerHTML += row;
+      });
+
+      document.getElementById("resultCard").style.display = "block";
+      document.getElementById("errorCard").style.display  = "none";
+    }
+
+    // --- Tampilkan Error ---
+    function showError(msg) {
+      document.getElementById("errorMsg").textContent    = msg;
+      document.getElementById("errorCard").style.display = "block";
+      document.getElementById("resultCard").style.display = "none";
+    }
+
+    // --- Reset App ---
+    function resetApp() {
+      selectedFile = null;
+      document.getElementById("fileInput").value       = "";
+      document.getElementById("previewCard").style.display  = "none";
+      document.getElementById("btnContainer").style.display = "none";
+      document.getElementById("resultCard").style.display   = "none";
+      document.getElementById("errorCard").style.display    = "none";
+      document.getElementById("previewImg").src             = "";
+    }
+  </script>
+
+</body>
+</html>
